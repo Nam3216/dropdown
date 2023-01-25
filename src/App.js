@@ -12,9 +12,12 @@ import swal from 'sweetalert';
 
 
 function App() {
+  
   /*---------------------lista cdo lo llama firestore, lista actualizado con search---------------*/
   const[contact,setContacts]=useState([])
  // const[contactsOk,setContactsOk]=useState([])
+ const[lastElement,setLastElement]=useState(0)
+
   /*---------------- modal----------------*/
   const [show, setShow] = useState(false);
 
@@ -35,49 +38,56 @@ function App() {
   }
 
  /*------------------------------------------------------------------*/
-let lastVisible
+
   /* llamo a firestore*/
+  
   const getApi=async()=>{
-    
-    const itemsCollection=query(collection(database,"agenda"),orderBy("Codigo"),limit(20))//para q traiga 20 
+ 
+    console.log(contact,"lastelementfirst")
+    const itemsCollection=query(collection(database,"agenda"),orderBy("Codigo"),startAfter(lastElement), limit(20))//para q traiga 20 
     const contactSnapshot=await getDocs(itemsCollection)
+    console.log(contactSnapshot.docs, "docs")
    
     
-    console.log("last", lastVisible)
+  
 
     const contactsList=contactSnapshot.docs.map((doc)=>{
-      let contact=doc.data()
-      contact.id=doc.id
-      return contact
+      let contactOk=doc.data()
+      contactOk.id=doc.id
+    
+      return contactOk
     })
-    console.log(contactsList, "contacts")
-    lastVisible = contactsList[contactsList.length-1];
-    console.log(lastVisible,"ok")
+    
+  
+   
+  
+   if(lastElement==0){
     setContacts(contactsList)
+    /*esto no para buttonsetLastElement(20)*/
+   }else{
+    let list=contact
+    //console.log(list,"contactlese")
+
+    for (const item of contactsList){
+      list.push(item)
+    }
+   
+   // console.log(list,"listfinally")
+     
+   }
+  
+  // console.log(contactsList, "contactlist")
+
+    setLastElement(contactsList[contactsList.length-1].Codigo)
+
+   // console.log(lastElement, "lastvisible")
     return contactsList
     
   }
 
-  //ver si se puede hacer con startafter, aunque ahi estaria ok, siempre trae 20 mas
-  //ponerle en vez de boton, scroll down
-  const getApi1=async()=>{
-    alert("more1")
-    
-    const itemsCollection=query(collection(database,"agenda"),limit(contact.length+20))//,startAfter(lastVisible))//para q traiga 20 
-    const contactSnapshot=await getDocs(itemsCollection)
-   
+  
 
-   
-    const contactsList=contactSnapshot.docs.map((doc)=>{
-      let contact=doc.data()
-      contact.id=doc.id
-      return contact
-    })
-    console.log(contactsList, "contacts")
-    setContacts(contactsList)
-    return contactsList
-    
-  }
+  
 //guarda en firestore nuevo contacto
   const handleSubmit=async(e)=>{
     e.preventDefault()
@@ -101,12 +111,27 @@ let lastVisible
     }
 
   
-  
+  /* intente activar el metodo getApi cdo se llegara al final de la pagina, pero el lastElement no quedaba guardado, sino que daba siempre 0*/
+    /*const handleScroll=()=>{
+      
+     
+      let elm=document.querySelector(".App")
+      if ((window.innerHeight + window.scrollY) >= elm.offsetHeight){
+        console.log(contact,"handl")
+       getApi()
 
+    }
+   }
 
+   useEffect(()=>{
+    window.addEventListener("scroll",handleScroll)
+    return ()=>{
+      window.removeEventListener("scroll",handleScroll)
+    }
 
- 
+   },[])  */
 
+   
   return (
     <>
     <div className="App">
@@ -121,18 +146,19 @@ let lastVisible
           
             <div>
             <input type="text" placeholder='Busca contacto' onChange={handleSearch}/>
-            <button onClick={()=>alert(infoSearch)}>click</button>
+           
             </div>
        
-          <Dropdown.Item >Something else</Dropdown.Item>
+    
         </Dropdown.Menu>
       </Dropdown>
 
-      <div>
+      <div className='contact-container'>
         {contact.map((item,index)=>{
           
           return(
-            <div className='contacts' key={index} >
+            <div className='contacts' key={index} id={`${index}`} >
+             
               <p>{index+1} </p>
               <p>Nombre: {item.Nombre} </p>
               <p>Razon Social: {item.RazonSocial} </p>
@@ -143,8 +169,9 @@ let lastVisible
             </div>
           )
         })}
-        <button onClick={getApi1}>More</button>
+        
       </div>
+      <button onClick={getApi} className="loadmore">Load more</button>
     </div>
     <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
@@ -165,9 +192,7 @@ let lastVisible
           <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={handleClose}>
-            Save Changes
-          </Button>
+         
         </Modal.Footer>
       </Modal>
  
@@ -176,30 +201,4 @@ let lastVisible
 }
 
 export default App;
-   //<ModalOk show={show} handleClose={handleClose}/>
-
-/* para obtener un solo doc especifico
-
-import { doc, getDoc } from "firebase/firestore";
-import db from "..."
-
-const getProduct=async()=>{
-    const docRef = doc(db, "listProducts", id);//el id lo saco del useParams q deberia estar en ese compoente. como ya estoy usando el id del firebase, lo q se muestre en url es el id de firebase, lo toma con useParams
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {//si existe muestra data
-        console.log("Document data:", docSnap.data());
-        let product=docSnap.data()//con estos 3 renglones guardo en product la info, le agrego el id, y lo guardo en estate para usarlo
-        product.id=docSnap.id//guardo id porque no esta en data
-        setProduct(product)
-      } else {
-        // doc.data() will be undefined in this case
-        console.log("No such document!");
-        navigate("/error") //esto se puede agregar o no, es para si hay error manda auna pagina error, para eso tengo q poner import naigate como dice abajo
-      }
-
-}
-
-useEffect(()=>{
-    getProduct
-},[])*/
+   

@@ -1,5 +1,6 @@
 .App {
   text-align: center;
+
 }
 
 .App-logo {
@@ -16,5 +17,11 @@
 form input{
   display: block;
   margin-bottom: 3px;
+
+}
+
+.contact-container{
+  min-height: 90vh;
+
 
 }
