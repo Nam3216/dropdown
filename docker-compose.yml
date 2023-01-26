@@ -1,0 +1,12 @@
+version: "v2.15.1"
+services:
+  app:
+    build: 
+      context: .
+    volumes:
+      - .:/dropdown
+    ports:
+      - 3000:3000
+    image: app:react
+    container_name: react_container 
+    command: npm start   
